@@ -1,25 +1,41 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Events, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, SlashCommandBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, Events, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, SlashCommandBuilder, REST, Routes } = require('discord.js');
 const express = require('express');
 
-// --- 1. SERVEUR EXPRESS (Pour le Health Check) ---
+// --- 1. SERVEUR POUR L'HÉBERGEUR (Health Check) ---
 const app = express();
 const port = process.env.PORT || 3000;
 app.get('/', (req, res) => res.send('Bot en ligne !'));
-app.listen(port, () => console.log(`Serveur de santé actif sur le port ${port}`));
+app.listen(port, () => console.log(`Serveur santé actif sur port ${port}`));
 
 // --- 2. CONFIGURATION DU BOT ---
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const SALON_AUDIANCE_ID = '1479225210417709150';
 
-client.once('ready', () => {
-    console.log(`Bot connecté en tant que ${client.user.tag}`);
+client.once('ready', async () => {
+    console.log(`Bot connecté : ${client.user.tag}`);
+
+    // --- 3. ENREGISTREMENT AUTOMATIQUE DE LA COMMANDE ---
+    const commands = [
+        new SlashCommandBuilder()
+            .setName('audiance')
+            .setDescription('Ouvre le formulaire de convocation à la cour')
+    ];
+
+    const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+
+    try {
+        await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+        console.log('Commande /audiance enregistrée avec succès !');
+    } catch (error) {
+        console.error('Erreur lors de l\'enregistrement :', error);
+    }
 });
 
-// --- 3. GESTION DES INTERACTIONS ---
+// --- 4. GESTION DES INTERACTIONS ---
 client.on(Events.InteractionCreate, async interaction => {
     
-    // Commande /audiance
+    // Si c'est la commande /audiance
     if (interaction.isChatInputCommand()) {
         if (interaction.commandName === 'audiance') {
             const modal = new ModalBuilder()
@@ -51,7 +67,7 @@ client.on(Events.InteractionCreate, async interaction => {
         }
     }
 
-    // Soumission du formulaire
+    // Si c'est la soumission du formulaire
     else if (interaction.isModalSubmit()) {
         if (interaction.customId === 'modal_audiance') {
             const channel = interaction.client.channels.cache.get(SALON_AUDIANCE_ID);
