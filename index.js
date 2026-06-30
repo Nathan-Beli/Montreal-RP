@@ -1,18 +1,25 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Events, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, Events, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, SlashCommandBuilder } = require('discord.js');
+const express = require('express');
 
+// --- 1. SERVEUR EXPRESS (Pour le Health Check) ---
+const app = express();
+const port = process.env.PORT || 3000;
+app.get('/', (req, res) => res.send('Bot en ligne !'));
+app.listen(port, () => console.log(`Serveur de santé actif sur le port ${port}`));
+
+// --- 2. CONFIGURATION DU BOT ---
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-
 const SALON_AUDIANCE_ID = '1479225210417709150';
 
 client.once('ready', () => {
     console.log(`Bot connecté en tant que ${client.user.tag}`);
 });
 
-// Écoute des interactions
+// --- 3. GESTION DES INTERACTIONS ---
 client.on(Events.InteractionCreate, async interaction => {
     
-    // Si c'est la commande /audiance
+    // Commande /audiance
     if (interaction.isChatInputCommand()) {
         if (interaction.commandName === 'audiance') {
             const modal = new ModalBuilder()
@@ -44,11 +51,11 @@ client.on(Events.InteractionCreate, async interaction => {
         }
     }
 
-    // Si c'est la soumission du formulaire
+    // Soumission du formulaire
     else if (interaction.isModalSubmit()) {
         if (interaction.customId === 'modal_audiance') {
             const channel = interaction.client.channels.cache.get(SALON_AUDIANCE_ID);
-            if (!channel) return interaction.reply({ content: "Salon introuvable.", ephemeral: true });
+            if (!channel) return interaction.reply({ content: "Erreur : Salon introuvable.", ephemeral: true });
 
             const f = interaction.fields;
             const message = `
@@ -68,7 +75,7 @@ Modèle de convocation :
 :file_folder: Dossier traité par ${interaction.user.toString()}`;
 
             await channel.send(message);
-            await interaction.reply({ content: "La convocation a été envoyée.", ephemeral: true });
+            await interaction.reply({ content: "La convocation a été envoyée avec succès.", ephemeral: true });
         }
     }
 });
