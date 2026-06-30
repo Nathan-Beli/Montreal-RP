@@ -1,8 +1,5 @@
-import json
-
-# Création du contenu du package.json
-package_json = {
-    "name": "bot-convocation-cour",
+{
+    "name": "montreal-rp",
     "version": "1.0.0",
     "description": "Bot Discord pour la gestion des convocations à la cour",
     "main": "index.js",
@@ -15,11 +12,5 @@ package_json = {
     },
     "engines": {
         "node": ">=16.9.0"
-    },
-    "author": "",
-    "license": "ISC"
+    }
 }
-
-# Écriture du fichier dans un format lisible
-with open('package.json', 'w', encoding='utf-8') as f:
-    json.dump(package_json, f, indent=4)
